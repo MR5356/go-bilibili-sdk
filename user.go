@@ -32,6 +32,8 @@ func (c *Client) GetMyInfo() (*MyInfo, error) {
 	}
 	logrus.Debugf("check cookie valid response: %+v", string(resp.Body()))
 
+	logrus.Infof("resp: %s", resp.String())
+
 	var myInfo MyInfo
 	err = json.Unmarshal(resp.Body(), &myInfo)
 	if err != nil {

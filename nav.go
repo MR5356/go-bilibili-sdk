@@ -1,61 +1,44 @@
-# Go-BiliBili-SDK
-Golang版本的BiliBili SDK
+package bilibili
 
-## 创建客户端
-创建一个默认客户端
-```go
-client := bilibili.New()
-```
-创建一个带有bilibili用户登录Cookie的客户端（注意：每次携带cookie登录后都会检测cookie是否需要更新，如果需要的话会自动进行更新，注意每次使用完毕后使用``client.GetCookie()``方法获取最新的cookie并保存）
-```go
-cookie := &bilibili.Cookie{
-    SessData:        "xxx",
-    BiliJCT:         "xxx",
-    DedeUserID:      "xxx",
-    DedeUserIDCKMd5: "xxx",
-    RefreshToken:    "xxx",
-}
-client := bilibili.New(bilibili.WithCookie(cookie))
-```
-客户端的可选参数
-* 使用自定义UserAgent: ``WithUserAgent(userAgent string)``
-* 开启Debug模式: ``WithDebug(debug bool)``
-* 携带登录信息: ``WithCookie(cookie *bilibili.Cookie)``
+import (
+	"encoding/json"
+	"github.com/sirupsen/logrus"
+)
 
-## 扫码登录BiliBili账号
-```go
-client := bilibili.New()
-
-// 创建一个用于接受BiliBili登录二维码的通道，接收到后将字符串转换为二维码，使用BiliBili手机端扫码登录
-qrCode := make(chan string)
-go func() {
-	for range time.Tick(time.Second) {
-		select {
-		// 二维码可能会过期，所以可能会多次发送二维码URL，注意接收
-		case code, ok := <-qrCode:
-			if ok {
-				logrus.Infof("code: %s", code)
-			} else {
-				break
-			}
-		}
+func (c *Client) GetNavUserInfo() (navUserInfo *NavUserInfo, err error) {
+	logrus.Debugf("http accessing %s", biliApiNavUserInfo)
+	resp, err := c.httpClient.R().Get(biliApiNavUserInfo)
+	if err != nil {
+		return nil, err
 	}
-}()
 
-// 执行登录操作
-err := client.Login(qrCode)
+	err = json.Unmarshal(resp.Body(), &navUserInfo)
 
-// 登陆成功后通过 GetCookie() 获取Cookie信息并注意保存
-cookieStr := client.GetCookie()
-```
+	return navUserInfo, nil
+}
 
-## 获取状态栏信息
-### 获取用户信息
-```go
-client.GetNavUserInfo()
-```
-返回定义如下
-```go
+func (c *Client) GetNavUserStat() (navUserStat *NavUserStat, err error) {
+	logrus.Debugf("http accessing %s", biliApiNavUserStat)
+	resp, err := c.httpClient.R().Get(biliApiNavUserStat)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(resp.Body(), &navUserStat)
+	return
+}
+
+func (c *Client) GetCoinInfo() (siteCoin *CoinInfo, err error) {
+	logrus.Debugf("http accessing %s", biliApiSiteGetCoin)
+	resp, err := c.httpClient.R().Get(biliApiSiteGetCoin)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(resp.Body(), &siteCoin)
+	return
+}
+
 type NavUserInfo struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
@@ -164,13 +147,7 @@ type NavUserInfo struct {
 		IsJury bool `json:"is_jury"`
 	} `json:"data"`
 }
-```
-### 获取用户状态
-```go
-client.GetNavUserStat()
-```
-返回信息如下
-```go
+
 type NavUserStat struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
@@ -184,13 +161,7 @@ type NavUserStat struct {
 		DynamicCount int `json:"dynamic_count"`
 	} `json:"data"`
 }
-```
-### 获取硬币数量
-```go
-client.GetCoinInfo()
-```
-返回信息如下
-```go
+
 type CoinInfo struct {
 	Code   int  `json:"code"`
 	Status bool `json:"status"`
@@ -199,4 +170,3 @@ type CoinInfo struct {
 		Money interface{} `json:"money"`
 	} `json:"data"`
 }
-```
