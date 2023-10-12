@@ -12,6 +12,10 @@ type Client struct {
 	httpClient *resty.Client
 }
 
+// New initializes and returns a new client.
+//
+// It accepts zero or more configurations (Cfg) as input parameters.
+// The function returns a pointer to a Client struct.
 func New(cfgs ...Cfg) *Client {
 	httpClient := resty.New()
 
@@ -39,6 +43,11 @@ func New(cfgs ...Cfg) *Client {
 
 	if c.Cookie != nil {
 		client.setCookies(c.Cookie)
+
+		err := client.refreshCookie()
+		if err != nil {
+			logrus.Warnf("refresh cookie error: %+v", err)
+		}
 	}
 
 	return client

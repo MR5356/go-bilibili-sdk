@@ -2,6 +2,9 @@ package bilibili
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
+	"github.com/sirupsen/logrus"
 	"net/http"
 	"strings"
 )
@@ -94,4 +97,30 @@ func (c *Client) setCookies(ck *Cookie) {
 // It returns a string.
 func (c *Client) GetCookie() string {
 	return c.config.Cookie.ToString()
+}
+
+func (c *Client) getCookieInfo() (cookieInfo *CookieInfo, err error) {
+	url := fmt.Sprintf(biliApiCookieInfo, c.config.Cookie.BiliJCT)
+	logrus.Debugf("http accessing %s", url)
+	resp, err := c.httpClient.R().Get(url)
+	if err != nil {
+		logrus.Errorf("get cookie info error: %+v", err)
+		return nil, err
+	}
+
+	err = json.Unmarshal(resp.Body(), &cookieInfo)
+
+	if cookieInfo.Code != 0 {
+		return cookieInfo, errors.New(cookieInfo.Message)
+	}
+	return
+}
+
+type CookieInfo struct {
+	Code    int    `json:"code"`
+	Message string `json:"message"`
+	Data    struct {
+		Refresh   bool `json:"refresh"`
+		Timestamp int  `json:"timestamp"`
+	} `json:"data"`
 }

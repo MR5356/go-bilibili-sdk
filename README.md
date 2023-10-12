@@ -6,7 +6,7 @@ Golang版本的BiliBili SDK
 ```go
 client := bilibili.New()
 ```
-创建一个带有bilibili用户登录Cookie的客户端
+创建一个带有bilibili用户登录Cookie的客户端（注意：每次携带cookie登录后都会检测cookie是否需要更新，如果需要的话会自动进行更新，注意每次使用完毕后使用``client.GetCookie()``方法获取最新的cookie并保存）
 ```go
 cookie := &bilibili.Cookie{
     SessData:        "xxx",
